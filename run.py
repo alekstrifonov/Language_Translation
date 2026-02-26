@@ -50,9 +50,19 @@ def perplexity(nmt, test, batchSize):
     return math.exp(H / c)
 
 
-
 if len(sys.argv) > 1 and sys.argv[1] == "prepare":
-    trainCorpus, devCorpus, word2ind = utils.prepareData( sourceFileName, targetFileName, sourceDevFileName, targetDevFileName, startToken, endToken, unkToken, padToken, transToken, vocab_size)
+    trainCorpus, devCorpus, word2ind = utils.prepareData(
+        sourceFileName,
+        targetFileName,
+        sourceDevFileName,
+        targetDevFileName,
+        startToken,
+        endToken,
+        unkToken,
+        padToken,
+        transToken,
+        vocab_size,
+    )
     pickle.dump((trainCorpus, devCorpus), open(corpusFileName, "wb"))
     pickle.dump(word2ind, open(wordsFileName, "wb"))
     print("Data prepared.")
@@ -61,7 +71,19 @@ if len(sys.argv) > 1 and (sys.argv[1] == "train" or sys.argv[1] == "extratrain")
     (trainCorpus, devCorpus) = pickle.load(open(corpusFileName, "rb"))
     word2ind = pickle.load(open(wordsFileName, "rb"))
 
-    nmt = model.LanguageModel(parameter1, parameter2, parameter3, parameter4).to(device)
+    nmt = model.LanguageModel(
+        vocab_size,
+        startTokenIdx,
+        endTokenIdx,
+        transTokenIdx,
+        padTokenIdx,
+        layers,
+        embed_size,
+        hidden_size,
+        n_head,
+        dropout,
+    ).to(device)
+ 
     optimizer = torch.optim.Adam(nmt.parameters(), lr=learning_rate)
 
     if sys.argv[1] == "extratrain":
@@ -97,7 +119,24 @@ if len(sys.argv) > 1 and (sys.argv[1] == "train" or sys.argv[1] == "extratrain")
             grad_norm = torch.nn.utils.clip_grad_norm_(nmt.parameters(), clip_grad)
             optimizer.step()
             if iter % log_every == 0:
-                print( "Iteration:", iter, "Epoch:", epoch + 1, "/", maxEpochs, ", Batch:", b // batchSize + 1, "/", len(idx) // batchSize + 1, ", loss: ", H.item(), "words/sec:", words / (time.time() - trainTime), "time elapsed:", (time.time() - beginTime),)
+                print(
+                    "Iteration:",
+                    iter,
+                    "Epoch:",
+                    epoch + 1,
+                    "/",
+                    maxEpochs,
+                    ", Batch:",
+                    b // batchSize + 1,
+                    "/",
+                    len(idx) // batchSize + 1,
+                    ", loss: ",
+                    H.item(),
+                    "words/sec:",
+                    words / (time.time() - trainTime),
+                    "time elapsed:",
+                    (time.time() - beginTime),
+                )
                 trainTime = time.time()
                 words = 0
 
@@ -177,7 +216,18 @@ if len(sys.argv) > 2 and sys.argv[1] == "generate":
     test = sys.argv[2].split()
     test = [word2ind.get(w, unkTokenIdx) for w in test]
 
-    nmt = model.LanguageModel(parameter1, parameter2, parameter3, parameter4).to(device)
+    nmt = model.LanguageModel(
+        vocab_size,
+        startTokenIdx,
+        endTokenIdx,
+        transTokenIdx,
+        padTokenIdx,
+        layers,
+        embed_size,
+        hidden_size,
+        n_head,
+        dropout,
+    ).to(device)
     nmt.load(modelFileName)
 
     nmt.eval()
@@ -193,15 +243,13 @@ if len(sys.argv) > 3 and sys.argv[1] == "bleu":
     print("Corpus BLEU: ", (bleu_score * 100))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     (trainCorpus, devCorpus) = pickle.load(open(corpusFileName, "rb"))
     word2ind = pickle.load(open(wordsFileName, "rb"))
 
     print(trainCorpus[1])
 
-    ind2word = {v : k for k, v in word2ind.items()}
+    ind2word = {v: k for k, v in word2ind.items()}
 
     y = [ind2word[i] for i in trainCorpus[1]]
     print(y)
-
-    

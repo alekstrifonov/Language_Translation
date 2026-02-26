@@ -13,16 +13,16 @@ modelFileName = 'NMTmodel'
 device = torch.device("cpu")
 
 vocab_size = 16000
-
-parameter1 = 1
-parameter2 = 2
-parameter3 = 3
-parameter4 = 4
+layers=2
+embed_size=32
+hidden_size=128
+n_head=2
+dropout=0.1
 
 learning_rate = 0.001
-batchSize = 32
+batchSize = 2
 clip_grad = 5.0
 
-maxEpochs = 10
+maxEpochs = 1
 log_every = 10
 test_every = 2000
