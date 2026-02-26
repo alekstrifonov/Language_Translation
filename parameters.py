@@ -9,10 +9,8 @@ corpusFileName = 'corpusData'
 wordsFileName = 'wordsData'
 modelFileName = 'NMTmodel'
 
-#device = torch.device("cuda:0")
+device = torch.device("cuda:0")
 # device = torch.device("cpu")
-
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 vocab_size = 16000
 layers = 6

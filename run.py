@@ -21,8 +21,6 @@ import utils
 import model
 from parameters import *
 
-from torch.cuda.amp import autocast, GradScaler
-
 startToken = "<S>"
 startTokenIdx = 0
 
@@ -73,8 +71,6 @@ if len(sys.argv) > 1 and (sys.argv[1] == "train" or sys.argv[1] == "extratrain")
     (trainCorpus, devCorpus) = pickle.load(open(corpusFileName, "rb"))
     word2ind = pickle.load(open(wordsFileName, "rb"))
 
-    scaler = GradScaler()
-
     nmt = model.LanguageModel(
         vocab_size,
         startTokenIdx,
@@ -117,19 +113,11 @@ if len(sys.argv) > 1 and (sys.argv[1] == "train" or sys.argv[1] == "extratrain")
             batch = [trainCorpus[i] for i in idx[b : min(b + batchSize, len(idx))]]
 
             words += sum(len(s) - 1 for s in batch)
-            with autocast():
-                H = nmt(batch)
-                
+            H = nmt(batch)
             optimizer.zero_grad()
-            scaler.scale(H).backward()
-
-            scaler.unscale_(optimizer)
-
+            H.backward()
             grad_norm = torch.nn.utils.clip_grad_norm_(nmt.parameters(), clip_grad)
-
-            scaler.step(optimizer)
-            scaler.update()
-
+            optimizer.step()
             if iter % log_every == 0:
                 print(
                     "Iteration:",
