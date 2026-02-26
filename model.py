@@ -92,8 +92,8 @@ class LanguageModel(torch.nn.Module):
     def load(self, fileName):
         self.load_state_dict(torch.load(fileName))
 
-    def forward(self, source):
-        X = self.preparePaddedBatch(source)  # (batch_size, seq_len)
+    def forward(self, X):
+#        X = self.preparePaddedBatch(source)  # (batch_size, seq_len)
         padding_mask = X == self.padTokenIdx  # (batch_size, seq_len)
 
         seq_len = X.size(1)

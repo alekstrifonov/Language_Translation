@@ -49,6 +49,20 @@ def perplexity(nmt, test, batchSize):
             H += l * nmt(batch)
     return math.exp(H / c)
 
+def get_batches(corpus, batch_size, pad_idx):
+    corpus.sort(key=len, reverse=True)
+    
+    batches = []
+    for i in range(0, len(corpus), batch_size):
+        print(i)
+        batch_data = corpus[i : i + batch_size]
+        
+        max_l = max(len(s) for s in batch_data)
+        padded_batch = [s + [pad_idx] * (max_l - len(s)) for s in batch_data]
+        
+        batches.append(torch.tensor(padded_batch, dtype=torch.long))
+    return batches
+
 
 if len(sys.argv) > 1 and sys.argv[1] == "prepare":
     trainCorpus, devCorpus, word2ind = utils.prepareData(
@@ -98,6 +112,8 @@ if len(sys.argv) > 1 and (sys.argv[1] == "train" or sys.argv[1] == "extratrain")
         bestPerplexity = math.inf
         iter = 0
 
+    train_batches = get_batches(trainCorpus, batchSize, padTokenIdx)
+
     idx = np.arange(len(trainCorpus), dtype="int32")
     nmt.train()
     beginTime = time.time()
@@ -105,13 +121,10 @@ if len(sys.argv) > 1 and (sys.argv[1] == "train" or sys.argv[1] == "extratrain")
         np.random.shuffle(idx)
         words = 0
         trainTime = time.time()
-        for b in range(0, len(idx), batchSize):
-            #############################################################################
-            ### Може да се наложи да се променя скоростта на спускане learning_rate в зависимост от итерацията
-            #############################################################################
+        for b, batch in enumerate(train_batches):
             iter += 1
-            batch = [trainCorpus[i] for i in idx[b : min(b + batchSize, len(idx))]]
 
+            batch = batch.to(device)
             words += sum(len(s) - 1 for s in batch)
             H = nmt(batch)
             optimizer.zero_grad()
